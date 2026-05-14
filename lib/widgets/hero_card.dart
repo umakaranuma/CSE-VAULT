@@ -145,9 +145,9 @@ class HeroCard extends StatelessWidget {
                       children: [
                         _buildStat('INVESTED', 'LKR ${Formatters.compactCurrency(totalInvested)}', Colors.white),
                         Container(width: 1, height: 30, color: AppColors.border),
-                        _buildStat('UNREALISED', '${isUp ? '+' : ''}${Formatters.compactCurrency(totalUnrealised)}', isUp ? AppColors.em : AppColors.red),
+                        _buildStat('IN MARKET', '${isUp ? '+' : ''}${Formatters.compactCurrency(totalUnrealised)}', isUp ? AppColors.em : AppColors.red),
                         Container(width: 1, height: 30, color: AppColors.border),
-                        _buildStat('REALISED', '${totalRealised >= 0 ? '+' : ''}${Formatters.compactCurrency(totalRealised)}', totalRealised >= 0 ? AppColors.em : AppColors.red),
+                        _buildStat('CASHED OUT', '${totalRealised >= 0 ? '+' : ''}${Formatters.compactCurrency(totalRealised)}', totalRealised >= 0 ? AppColors.em : AppColors.red),
                       ],
                     ),
                   ),

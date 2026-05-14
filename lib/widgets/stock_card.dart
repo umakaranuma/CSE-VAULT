@@ -294,12 +294,12 @@ class _StockCardState extends State<StockCard> {
           Colors.white,
         ),
         _buildMetricBox(
-          'UNREALISED',
+          'IN MARKET',
           Formatters.compactCurrency(s.unrealised),
           isUp ? AppColors.em : AppColors.red,
         ),
         _buildMetricBox(
-          'REALISED',
+          'CASHED OUT',
           Formatters.compactCurrency(s.realised),
           s.realised >= 0 ? AppColors.em : AppColors.red,
         ),
