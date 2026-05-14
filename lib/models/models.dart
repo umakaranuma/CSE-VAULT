@@ -4,6 +4,7 @@ class Transaction {
   final double qty;
   final double price;
   final DateTime dt;
+  final double commission;
 
   Transaction({
     required this.id,
@@ -11,6 +12,7 @@ class Transaction {
     required this.qty,
     required this.price,
     required this.dt,
+    this.commission = 0.0,
   });
 }
 
@@ -46,11 +48,11 @@ class Stock {
   double get totalBoughtQty =>
       transactions.where((t) => t.type == 'buy').fold(0, (sum, t) => sum + t.qty);
   double get totalBoughtAmount =>
-      transactions.where((t) => t.type == 'buy').fold(0, (sum, t) => sum + (t.qty * t.price));
+      transactions.where((t) => t.type == 'buy').fold(0, (sum, t) => sum + (t.qty * t.price) + t.commission);
   double get totalSoldQty =>
       transactions.where((t) => t.type == 'sell').fold(0, (sum, t) => sum + t.qty);
   double get totalSoldAmount =>
-      transactions.where((t) => t.type == 'sell').fold(0, (sum, t) => sum + (t.qty * t.price));
+      transactions.where((t) => t.type == 'sell').fold(0, (sum, t) => sum + (t.qty * t.price) - t.commission);
 
   double get holdingsQty => totalBoughtQty - totalSoldQty;
   double get avgBuyPrice => totalBoughtQty > 0 ? totalBoughtAmount / totalBoughtQty : 0;

@@ -17,6 +17,7 @@ class _AddStockSheetState extends State<AddStockSheet> {
   final _qtyC = TextEditingController();
   final _priceC = TextEditingController();
   final _todayC = TextEditingController();
+  final _commissionPercentC = TextEditingController(text: '1.12');
   
   @override
   Widget build(BuildContext context) {
@@ -61,7 +62,13 @@ class _AddStockSheetState extends State<AddStockSheet> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildField('Current Market Price (LKR)', _todayC, 'Leave blank to use buy price', isNum: true),
+            Row(
+              children: [
+                Expanded(flex: 2, child: _buildField('Current Price (LKR)', _todayC, 'Blank to use buy price', isNum: true)),
+                const SizedBox(width: 12),
+                Expanded(flex: 1, child: _buildField('Broker Fee (%)', _commissionPercentC, '1.12', isNum: true)),
+              ],
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -150,10 +157,13 @@ class _AddStockSheetState extends State<AddStockSheet> {
     final qty = double.tryParse(_qtyC.text) ?? 0;
     final price = double.tryParse(_priceC.text) ?? 0;
     final today = double.tryParse(_todayC.text) ?? 0;
+    final commissionPercent = double.tryParse(_commissionPercentC.text) ?? 1.12;
 
     if (code.isEmpty || name.isEmpty || qty <= 0 || price <= 0) return;
 
-    context.read<PortfolioProvider>().addStock(code, name, _type, qty, price, DateTime.now(), today);
+    final commissionAmount = (qty * price) * (commissionPercent / 100);
+
+    context.read<PortfolioProvider>().addStock(code, name, _type, qty, price, DateTime.now(), today, commission: commissionAmount);
     Navigator.pop(context);
   }
 }

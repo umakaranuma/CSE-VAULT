@@ -16,6 +16,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   late String _type;
   final _qtyC = TextEditingController();
   final _priceC = TextEditingController();
+  final _commissionPercentC = TextEditingController(text: '1.12');
 
   @override
   void initState() {
@@ -54,9 +55,11 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
               children: [
                 Expanded(child: _buildField('Quantity *', _qtyC, '100', isNum: true)),
                 const SizedBox(width: 12),
-                Expanded(child: _buildField('Price / Share (LKR) *', _priceC, '95.00', isNum: true)),
+                Expanded(child: _buildField('Price / Share *', _priceC, '95.00', isNum: true)),
               ],
             ),
+            const SizedBox(height: 16),
+            _buildField('Broker Fee (%)', _commissionPercentC, '1.12', isNum: true),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -142,9 +145,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   void _save() {
     final qty = double.tryParse(_qtyC.text) ?? 0;
     final price = double.tryParse(_priceC.text) ?? 0;
+    final commissionPercent = double.tryParse(_commissionPercentC.text) ?? 1.12;
+
     if (qty <= 0 || price <= 0) return;
 
-    context.read<PortfolioProvider>().addTransaction(widget.code, _type, qty, price, DateTime.now());
+    final commissionAmount = (qty * price) * (commissionPercent / 100);
+
+    context.read<PortfolioProvider>().addTransaction(widget.code, _type, qty, price, DateTime.now(), commission: commissionAmount);
     Navigator.pop(context);
   }
 }

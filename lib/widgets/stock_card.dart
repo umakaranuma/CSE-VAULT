@@ -119,7 +119,11 @@ class _StockCardState extends State<StockCard> {
                   AnimatedRotation(
                     turns: _isOpen ? 0.5 : 0.0,
                     duration: const Duration(milliseconds: 250),
-                    child: const Icon(LucideIcons.chevronDown, color: AppColors.t4, size: 16),
+                    child: const Icon(
+                      LucideIcons.chevronDown,
+                      color: AppColors.t4,
+                      size: 16,
+                    ),
                   ),
                 ],
               ),
@@ -144,12 +148,16 @@ class _StockCardState extends State<StockCard> {
                   if (s.priceLog.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildSubSectionTitle('Price Log'),
-                    ...s.priceLog.take(8).map((l) => _buildLogItem(context, s, l)),
+                    ...s.priceLog
+                        .take(8)
+                        .map((l) => _buildLogItem(context, s, l)),
                   ],
                   if (s.transactions.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildSubSectionTitle('Transactions'),
-                    ...s.transactions.take(6).map((t) => _buildTxItem(context, s, t)),
+                    ...s.transactions
+                        .take(6)
+                        .map((t) => _buildTxItem(context, s, t)),
                   ],
                 ],
               ),
@@ -221,16 +229,31 @@ class _StockCardState extends State<StockCard> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Text('TODAY\'S PRICE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0x8000FFA3), letterSpacing: 1.0)),
+              Text(
+                'TODAY\'S PRICE',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0x8000FFA3),
+                  letterSpacing: 1.0,
+                ),
+              ),
               SizedBox(height: 4),
-              Text('Tap to update', style: TextStyle(fontSize: 10, color: AppColors.t3)),
+              Text(
+                'Tap to update',
+                style: TextStyle(fontSize: 10, color: AppColors.t3),
+              ),
             ],
           ),
           SizedBox(
             width: 120,
             child: TextField(
-              controller: TextEditingController(text: s.todayPrice.toStringAsFixed(2)),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              controller: TextEditingController(
+                text: s.todayPrice.toStringAsFixed(2),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textAlign: TextAlign.right,
               style: GoogleFonts.jetBrainsMono(
                 color: AppColors.em,
@@ -265,12 +288,36 @@ class _StockCardState extends State<StockCard> {
       crossAxisSpacing: 8,
       childAspectRatio: 2.5,
       children: [
-        _buildMetricBox('AVG BUY', s.avgBuyPrice > 0 ? s.avgBuyPrice.toStringAsFixed(2) : '—', Colors.white),
-        _buildMetricBox('UNREALISED', Formatters.compactCurrency(s.unrealised), isUp ? AppColors.em : AppColors.red),
-        _buildMetricBox('REALISED', Formatters.compactCurrency(s.realised), s.realised >= 0 ? AppColors.em : AppColors.red),
-        _buildMetricBox('BOUGHT', Formatters.compactCurrency(s.totalBoughtQty), AppColors.em),
-        _buildMetricBox('SOLD', Formatters.compactCurrency(s.totalSoldQty), AppColors.gold),
-        _buildMetricBox('HOLDING', Formatters.compactCurrency(s.holdingsQty), AppColors.blue),
+        _buildMetricBox(
+          'AVG BUY',
+          s.avgBuyPrice > 0 ? s.avgBuyPrice.toStringAsFixed(2) : '—',
+          Colors.white,
+        ),
+        _buildMetricBox(
+          'UNREALISED',
+          Formatters.compactCurrency(s.unrealised),
+          isUp ? AppColors.em : AppColors.red,
+        ),
+        _buildMetricBox(
+          'REALISED',
+          Formatters.compactCurrency(s.realised),
+          s.realised >= 0 ? AppColors.em : AppColors.red,
+        ),
+        _buildMetricBox(
+          'BOUGHT',
+          Formatters.compactCurrency(s.totalBoughtQty),
+          AppColors.em,
+        ),
+        _buildMetricBox(
+          'SOLD',
+          Formatters.compactCurrency(s.totalSoldQty),
+          AppColors.gold,
+        ),
+        _buildMetricBox(
+          'HOLDING',
+          Formatters.compactCurrency(s.holdingsQty),
+          AppColors.blue,
+        ),
       ],
     );
   }
@@ -286,9 +333,24 @@ class _StockCardState extends State<StockCard> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.t4, letterSpacing: 0.8)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: AppColors.t4,
+              letterSpacing: 0.8,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w700, color: vColor)),
+          Text(
+            value,
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: vColor,
+            ),
+          ),
         ],
       ),
     );
@@ -310,7 +372,10 @@ class _StockCardState extends State<StockCard> {
           children: const [
             Icon(LucideIcons.trendingUp, color: AppColors.t4, size: 28),
             SizedBox(height: 5),
-            Text('Log 2+ prices to see chart', style: TextStyle(fontSize: 11, color: AppColors.t4)),
+            Text(
+              'Log 2+ prices to see chart',
+              style: TextStyle(fontSize: 11, color: AppColors.t4),
+            ),
           ],
         ),
       );
@@ -319,7 +384,7 @@ class _StockCardState extends State<StockCard> {
     final lastPrice = log.last.price;
     final isUp = lastPrice >= s.avgBuyPrice;
     final cMain = isUp ? AppColors.em : AppColors.red;
-    
+
     return Stack(
       children: [
         Container(
@@ -327,69 +392,94 @@ class _StockCardState extends State<StockCard> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0x33000000),
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: LineChart(
-        LineChartData(
-          lineBarsData: [
-            LineChartBarData(
-              spots: log.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.price)).toList(),
-              isCurved: true,
-              color: cMain,
-              barWidth: 2,
-              isStrokeCapRound: true,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [cMain.withOpacity(0.18), Colors.transparent],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: LineChart(
+            LineChartData(
+              lineBarsData: [
+                LineChartBarData(
+                  spots: log
+                      .asMap()
+                      .entries
+                      .map((e) => FlSpot(e.key.toDouble(), e.value.price))
+                      .toList(),
+                  isCurved: true,
+                  color: cMain,
+                  barWidth: 2,
+                  isStrokeCapRound: true,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [cMain.withOpacity(0.18), Colors.transparent],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+                LineChartBarData(
+                  spots: log
+                      .asMap()
+                      .entries
+                      .map((e) => FlSpot(e.key.toDouble(), s.avgBuyPrice))
+                      .toList(),
+                  isCurved: false,
+                  color: AppColors.blue.withOpacity(0.5),
+                  barWidth: 1.5,
+                  dashArray: [4, 4],
+                  dotData: const FlDotData(show: false),
+                ),
+              ],
+              titlesData: FlTitlesData(
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 40,
+                    getTitlesWidget: (val, meta) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Text(
+                          val.toStringAsFixed(0),
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 9,
+                            color: AppColors.t3,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                bottomTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
                 ),
               ),
-            ),
-            LineChartBarData(
-              spots: log.asMap().entries.map((e) => FlSpot(e.key.toDouble(), s.avgBuyPrice)).toList(),
-              isCurved: false,
-              color: AppColors.blue.withOpacity(0.5),
-              barWidth: 1.5,
-              dashArray: [4, 4],
-              dotData: const FlDotData(show: false),
-            ),
-          ],
-          titlesData: FlTitlesData(
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (val, meta) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Text(val.toStringAsFixed(0), style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.t3)),
-                  );
-                },
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: 10,
+                getDrawingHorizontalLine: (value) =>
+                    const FlLine(color: Color(0x0AFFFFFF), strokeWidth: 1),
               ),
+              borderData: FlBorderData(show: false),
             ),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: 10,
-            getDrawingHorizontalLine: (value) => const FlLine(color: Color(0x0AFFFFFF), strokeWidth: 1),
-          ),
-          borderData: FlBorderData(show: false),
         ),
-      ),
-    ),
         Positioned(
           top: 4,
           right: 4,
           child: IconButton(
-            icon: const Icon(LucideIcons.maximize2, size: 16, color: AppColors.t2),
+            icon: const Icon(
+              LucideIcons.maximize2,
+              size: 16,
+              color: AppColors.t2,
+            ),
             onPressed: () {
               showModalBottomSheet(
                 context: context,
@@ -418,7 +508,13 @@ class _StockCardState extends State<StockCard> {
                 const Color(0x3300FFA3),
                 AppColors.em,
                 () {
-                  showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => AddTransactionSheet(code: code, type: 'buy'));
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) =>
+                        AddTransactionSheet(code: code, type: 'buy'),
+                  );
                 },
               ),
             ),
@@ -432,7 +528,13 @@ class _StockCardState extends State<StockCard> {
                 const Color(0x33FF4D6A),
                 AppColors.red,
                 () {
-                  showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => AddTransactionSheet(code: code, type: 'sell'));
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) =>
+                        AddTransactionSheet(code: code, type: 'sell'),
+                  );
                 },
               ),
             ),
@@ -449,7 +551,12 @@ class _StockCardState extends State<StockCard> {
             const Color(0x264D8FFF),
             AppColors.blue,
             () {
-              showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => LogPriceSheet(code: code));
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => LogPriceSheet(code: code),
+              );
             },
           ),
         ),
@@ -457,7 +564,15 @@ class _StockCardState extends State<StockCard> {
     );
   }
 
-  Widget _buildBtn(String text, IconData icon, Color c1, Color c2, Color b, Color tColor, VoidCallback onTap) {
+  Widget _buildBtn(
+    String text,
+    IconData icon,
+    Color c1,
+    Color c2,
+    Color b,
+    Color tColor,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(13),
@@ -465,7 +580,11 @@ class _StockCardState extends State<StockCard> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(13),
-          gradient: LinearGradient(colors: [c1, c2], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          gradient: LinearGradient(
+            colors: [c1, c2],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           border: Border.all(color: b),
         ),
         alignment: Alignment.center,
@@ -474,7 +593,15 @@ class _StockCardState extends State<StockCard> {
           children: [
             Icon(icon, size: 14, color: tColor),
             const SizedBox(width: 7),
-            Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: tColor, letterSpacing: 0.1)),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: tColor,
+                letterSpacing: 0.1,
+              ),
+            ),
           ],
         ),
       ),
@@ -486,7 +613,15 @@ class _StockCardState extends State<StockCard> {
       padding: const EdgeInsets.only(top: 16, bottom: 10),
       child: Row(
         children: [
-          Text(title.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.t3, letterSpacing: 1.0)),
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.t3,
+              letterSpacing: 1.0,
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(child: Container(height: 1, color: AppColors.border)),
         ],
@@ -498,30 +633,52 @@ class _StockCardState extends State<StockCard> {
     final isNearClose = l.price >= s.todayPrice * 0.99;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border))),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
       child: Row(
         children: [
           Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: isNearClose ? AppColors.em : AppColors.red),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isNearClose ? AppColors.em : AppColors.red,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('LKR ${l.price.toStringAsFixed(2)}', style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w700)),
+                Text(
+                  'LKR ${l.price.toStringAsFixed(2)}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 1),
-                Text(Formatters.formatDate(l.dt), style: const TextStyle(fontSize: 10, color: AppColors.t3, fontWeight: FontWeight.w500)),
+                Text(
+                  Formatters.formatDate(l.dt),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.t3,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 if (l.note != null && l.note!.isNotEmpty)
-                  Text(l.note!, style: const TextStyle(fontSize: 10, color: AppColors.t2)),
+                  Text(
+                    l.note!,
+                    style: const TextStyle(fontSize: 10, color: AppColors.t2),
+                  ),
               ],
             ),
           ),
           IconButton(
             icon: const Icon(LucideIcons.x, size: 14, color: AppColors.t3),
-            onPressed: () => context.read<PortfolioProvider>().deletePriceLog(s.code, l.id),
+            onPressed: () =>
+                context.read<PortfolioProvider>().deletePriceLog(s.code, l.id),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -534,7 +691,9 @@ class _StockCardState extends State<StockCard> {
     final isBuy = t.type == 'buy';
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border))),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
       child: Row(
         children: [
           Container(
@@ -542,34 +701,67 @@ class _StockCardState extends State<StockCard> {
             height: 34,
             decoration: BoxDecoration(
               color: isBuy ? const Color(0x1400FFA3) : const Color(0x14FF4D6A),
-              border: Border.all(color: isBuy ? const Color(0x2600FFA3) : const Color(0x26FF4D6A)),
+              border: Border.all(
+                color: isBuy
+                    ? const Color(0x2600FFA3)
+                    : const Color(0x26FF4D6A),
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(isBuy ? LucideIcons.trendingUp : LucideIcons.trendingDown, size: 15, color: isBuy ? AppColors.em : AppColors.red),
+            child: Icon(
+              isBuy ? LucideIcons.trendingUp : LucideIcons.trendingDown,
+              size: 15,
+              color: isBuy ? AppColors.em : AppColors.red,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(t.type.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: isBuy ? AppColors.em : AppColors.red, letterSpacing: 0.6)),
+                Text(
+                  t.type.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isBuy ? AppColors.em : AppColors.red,
+                    letterSpacing: 0.6,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(Formatters.formatDate(t.dt), style: GoogleFonts.jetBrainsMono(fontSize: 10, color: AppColors.t3)),
+                Text(
+                  Formatters.formatDate(t.dt),
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 10,
+                    color: AppColors.t3,
+                  ),
+                ),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('LKR ${t.price.toStringAsFixed(2)}', style: GoogleFonts.jetBrainsMono(fontSize: 13, fontWeight: FontWeight.w700)),
+              Text(
+                'LKR ${t.price.toStringAsFixed(2)}',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text('${Formatters.compactCurrency(t.qty)} shares', style: const TextStyle(fontSize: 10, color: AppColors.t2)),
+              Text(
+                '${Formatters.compactCurrency(t.qty)} shares',
+                style: const TextStyle(fontSize: 10, color: AppColors.t2),
+              ),
             ],
           ),
           const SizedBox(width: 10),
           IconButton(
             icon: const Icon(LucideIcons.x, size: 14, color: AppColors.t3),
-            onPressed: () => context.read<PortfolioProvider>().deleteTransaction(s.code, t.id),
+            onPressed: () => context
+                .read<PortfolioProvider>()
+                .deleteTransaction(s.code, t.id),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),

@@ -34,7 +34,7 @@ class PortfolioProvider extends ChangeNotifier {
   double get totalUnrealised => totalValue - totalInvested;
   double get totalPnlPercent => totalInvested > 0 ? (totalUnrealised / totalInvested) * 100 : 0;
 
-  void addStock(String code, String name, String type, double qty, double price, DateTime dt, double today) {
+  void addStock(String code, String name, String type, double qty, double price, DateTime dt, double today, {double commission = 0.0}) {
     if (!_stocks.containsKey(code)) {
       _stocks[code] = Stock(
         code: code,
@@ -55,6 +55,7 @@ class PortfolioProvider extends ChangeNotifier {
         qty: qty,
         price: price,
         dt: dt,
+        commission: commission,
       ),
     );
     
@@ -93,7 +94,7 @@ class PortfolioProvider extends ChangeNotifier {
     }
   }
 
-  void addTransaction(String code, String type, double qty, double price, DateTime dt) {
+  void addTransaction(String code, String type, double qty, double price, DateTime dt, {double commission = 0.0}) {
     _stocks[code]?.transactions.insert(
       0,
       Transaction(
@@ -102,6 +103,7 @@ class PortfolioProvider extends ChangeNotifier {
         qty: qty,
         price: price,
         dt: dt,
+        commission: commission,
       ),
     );
     notifyListeners();
