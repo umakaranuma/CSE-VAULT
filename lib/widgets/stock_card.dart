@@ -10,6 +10,7 @@ import '../utils/formatters.dart';
 import '../providers/portfolio_provider.dart';
 import '../sheets/log_price_sheet.dart';
 import '../sheets/add_transaction_sheet.dart';
+import '../sheets/chart_full_view_sheet.dart';
 
 class StockCard extends StatefulWidget {
   final Stock stock;
@@ -319,10 +320,13 @@ class _StockCardState extends State<StockCard> {
     final isUp = lastPrice >= s.avgBuyPrice;
     final cMain = isUp ? AppColors.em : AppColors.red;
     
-    return Container(
-      height: 130,
-      decoration: BoxDecoration(
-        color: const Color(0x33000000),
+    return Stack(
+      children: [
+        Container(
+          height: 130,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0x33000000),
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(14),
       ),
@@ -355,14 +359,14 @@ class _StockCardState extends State<StockCard> {
             ),
           ],
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 40,
                 getTitlesWidget: (val, meta) {
                   return Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
+                    padding: const EdgeInsets.only(right: 8.0),
                     child: Text(val.toStringAsFixed(0), style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.t3)),
                   );
                 },
@@ -380,6 +384,23 @@ class _StockCardState extends State<StockCard> {
           borderData: FlBorderData(show: false),
         ),
       ),
+    ),
+        Positioned(
+          top: 4,
+          right: 4,
+          child: IconButton(
+            icon: const Icon(LucideIcons.maximize2, size: 16, color: AppColors.t2),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => ChartFullViewSheet(stock: s),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
