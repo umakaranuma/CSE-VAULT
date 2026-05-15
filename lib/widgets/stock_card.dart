@@ -385,89 +385,133 @@ class _StockCardState extends State<StockCard> {
       );
     }
 
+    // Time-based X values (minutes from first entry)
+    final baseTime = log.first.dt.millisecondsSinceEpoch.toDouble();
+    final spots = log
+        .map((l) => FlSpot(
+              (l.dt.millisecondsSinceEpoch.toDouble() - baseTime) / 60000, // minutes
+              l.price,
+            ))
+        .toList();
+
+    // Tight Y bounds around actual data (not stretched to avg buy)
+    final prices = log.map((l) => l.price).toList();
+    final minPrice = prices.reduce((a, b) => a < b ? a : b);
+    final maxPrice = prices.reduce((a, b) => a > b ? a : b);
+    final priceRange = maxPrice - minPrice;
+    final padding = priceRange > 0 ? priceRange * 0.15 : maxPrice * 0.02;
+    final yMin = minPrice - padding;
+    final yMax = maxPrice + padding;
+
     final lastPrice = log.last.price;
     final isUp = lastPrice >= s.avgBuyPrice;
     final cMain = isUp ? AppColors.em : AppColors.red;
 
+    // Only show avg buy line if it falls within visible Y range
+    final showAvgLine = s.avgBuyPrice >= yMin && s.avgBuyPrice <= yMax && s.avgBuyPrice > 0;
+
+    // Grid interval based on actual price range
+    final gridInterval = priceRange > 0
+        ? (priceRange / 3).ceilToDouble().clamp(0.1, 1000.0)
+        : 1.0;
+
     return Stack(
       children: [
         Container(
-          height: 130,
+          height: 150,
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0x33000000),
             border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(14),
           ),
+          padding: const EdgeInsets.only(top: 8, right: 8),
           child: LineChart(
             LineChartData(
+              minY: yMin,
+              maxY: yMax,
               lineBarsData: [
+                // Price line
                 LineChartBarData(
-                  spots: log
-                      .asMap()
-                      .entries
-                      .map((e) => FlSpot(e.key.toDouble(), e.value.price))
-                      .toList(),
+                  spots: spots,
                   isCurved: true,
+                  curveSmoothness: 0.25,
                   color: cMain,
-                  barWidth: 2,
+                  barWidth: 2.5,
                   isStrokeCapRound: true,
-                  dotData: const FlDotData(show: false),
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, bar, index) =>
+                        FlDotCirclePainter(
+                      radius: 3,
+                      color: cMain,
+                      strokeWidth: 1.5,
+                      strokeColor: AppColors.bg,
+                    ),
+                  ),
                   belowBarData: BarAreaData(
                     show: true,
                     gradient: LinearGradient(
-                      colors: [cMain.withOpacity(0.18), Colors.transparent],
+                      colors: [cMain.withValues(alpha: 0.2), Colors.transparent],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
                   ),
                 ),
-                LineChartBarData(
-                  spots: log
-                      .asMap()
-                      .entries
-                      .map((e) => FlSpot(e.key.toDouble(), s.avgBuyPrice))
-                      .toList(),
-                  isCurved: false,
-                  color: AppColors.blue.withOpacity(0.5),
-                  barWidth: 1.5,
-                  dashArray: [4, 4],
-                  dotData: const FlDotData(show: false),
-                ),
+                // Avg buy line (only if in range)
+                if (showAvgLine)
+                  LineChartBarData(
+                    spots: [
+                      FlSpot(spots.first.x, s.avgBuyPrice),
+                      FlSpot(spots.last.x, s.avgBuyPrice),
+                    ],
+                    isCurved: false,
+                    color: AppColors.blue.withValues(alpha: 0.5),
+                    barWidth: 1.5,
+                    dashArray: [4, 4],
+                    dotData: const FlDotData(show: false),
+                  ),
               ],
-              titlesData: FlTitlesData(
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipItems: (spots) => spots.map((s) {
+                    if (s.barIndex > 0) return null; // skip avg line
+                    return LineTooltipItem(
+                      'LKR ${s.y.toStringAsFixed(2)}',
+                      GoogleFonts.jetBrainsMono(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: cMain,
+                      ),
+                    );
+                  }).toList(),
                 ),
+              ),
+              titlesData: FlTitlesData(
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 40,
+                    reservedSize: 46,
                     getTitlesWidget: (val, meta) {
+                      if (val == meta.min || val == meta.max) return const SizedBox.shrink();
                       return Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
+                        padding: const EdgeInsets.only(right: 6),
                         child: Text(
-                          val.toStringAsFixed(0),
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9,
-                            color: AppColors.t3,
-                          ),
+                          val.toStringAsFixed(1),
+                          style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.t3),
                         ),
                       );
                     },
                   ),
                 ),
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
               ),
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                horizontalInterval: 10,
+                horizontalInterval: gridInterval,
                 getDrawingHorizontalLine: (value) =>
                     const FlLine(color: Color(0x0AFFFFFF), strokeWidth: 1),
               ),
@@ -479,11 +523,7 @@ class _StockCardState extends State<StockCard> {
           top: 4,
           right: 4,
           child: IconButton(
-            icon: const Icon(
-              LucideIcons.maximize2,
-              size: 16,
-              color: AppColors.t2,
-            ),
+            icon: const Icon(LucideIcons.maximize2, size: 16, color: AppColors.t2),
             onPressed: () {
               showModalBottomSheet(
                 context: context,
