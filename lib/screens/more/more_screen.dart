@@ -94,46 +94,19 @@ class MoreScreen extends StatelessWidget {
               decoration: BoxDecoration(color: cardColor, border: Border.all(color: borderColor), borderRadius: BorderRadius.circular(16)),
               child: Consumer<ThemeProvider>(
                 builder: (context, themeProvider, _) {
-                  return Column(
-                    children: [
-                      _settingsTile(
-                        icon: LucideIcons.moon,
-                        iconColor: const Color(0xFF9B7DFF),
-                        title: 'Dark Mode',
-                        subtitle: themeProvider.isDark ? 'Enabled' : 'Disabled',
-                        trailing: Switch.adaptive(
-                          value: themeProvider.isDark,
-                          onChanged: (_) => themeProvider.toggle(),
-                          activeColor: AppColors.em,
-                        ),
-                      ),
-                      Divider(height: 1, color: borderColor),
-                      _settingsTile(
-                        icon: LucideIcons.sun,
-                        iconColor: AppColors.gold,
-                        title: 'Light Theme',
-                        subtitle: 'Clean, bright interface',
-                        trailing: Radio<bool>(
-                          value: false,
-                          groupValue: themeProvider.isDark,
-                          onChanged: (_) => themeProvider.setLight(),
-                          activeColor: AppColors.em,
-                        ),
-                      ),
-                      Divider(height: 1, color: borderColor),
-                      _settingsTile(
-                        icon: LucideIcons.moonStar,
-                        iconColor: AppColors.blue,
-                        title: 'Dark Theme',
-                        subtitle: 'Easy on the eyes',
-                        trailing: Radio<bool>(
-                          value: true,
-                          groupValue: themeProvider.isDark,
-                          onChanged: (_) => themeProvider.setDark(),
-                          activeColor: AppColors.em,
-                        ),
-                      ),
-                    ],
+                  return _settingsTile(
+                    icon: themeProvider.isDark ? LucideIcons.moon : LucideIcons.sun,
+                    iconColor: themeProvider.isDark ? const Color(0xFF9B7DFF) : AppColors.gold,
+                    title: themeProvider.isDark ? 'Dark Mode' : 'Light Mode',
+                    subtitle: themeProvider.isDark ? 'Tap to switch to light' : 'Tap to switch to dark',
+                    trailing: Switch.adaptive(
+                      value: themeProvider.isDark,
+                      onChanged: (_) => themeProvider.toggle(),
+                      activeTrackColor: AppColors.em.withValues(alpha: 0.4),
+                      activeColor: AppColors.em,
+                      inactiveTrackColor: AppColors.gold.withValues(alpha: 0.3),
+                      inactiveThumbColor: AppColors.gold,
+                    ),
                   );
                 },
               ),
