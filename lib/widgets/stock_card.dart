@@ -148,9 +148,13 @@ class _StockCardState extends State<StockCard> {
                   if (s.priceLog.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildSubSectionTitle('Price Log'),
-                    ...s.priceLog
-                        .take(8)
-                        .map((l) => _buildLogItem(context, s, l)),
+                    ...List.generate(
+                      s.priceLog.length > 8 ? 8 : s.priceLog.length,
+                      (i) => _buildLogItem(
+                        context, s, s.priceLog[i],
+                        prevLog: i + 1 < s.priceLog.length ? s.priceLog[i + 1] : null,
+                      ),
+                    ),
                   ],
                   if (s.transactions.isNotEmpty) ...[
                     const SizedBox(height: 16),
@@ -629,8 +633,11 @@ class _StockCardState extends State<StockCard> {
     );
   }
 
-  Widget _buildLogItem(BuildContext context, Stock s, PriceLog l) {
+  Widget _buildLogItem(BuildContext context, Stock s, PriceLog l, {PriceLog? prevLog}) {
     final isNearClose = l.price >= s.todayPrice * 0.99;
+    final delta = prevLog != null ? l.price - prevLog.price : null;
+    final isUp = delta != null ? delta >= 0 : true;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: const BoxDecoration(
@@ -638,40 +645,58 @@ class _StockCardState extends State<StockCard> {
       ),
       child: Row(
         children: [
+          // Time column
+          SizedBox(
+            width: 56,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  Formatters.formatTime(l.dt),
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isNearClose ? AppColors.em : AppColors.t2,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  Formatters.formatDateWithDay(l.dt),
+                  style: const TextStyle(fontSize: 8, color: AppColors.t3),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
           Container(
-            width: 6,
-            height: 6,
+            width: 6, height: 6,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isNearClose ? AppColors.em : AppColors.red,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'LKR ${l.price.toStringAsFixed(2)}',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  Formatters.formatDate(l.dt),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.t3,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      'LKR ${l.price.toStringAsFixed(2)}',
+                      style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    if (delta != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '${isUp ? '+' : ''}${delta.toStringAsFixed(2)}',
+                        style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.w600, color: isUp ? AppColors.em : AppColors.red),
+                      ),
+                    ],
+                  ],
                 ),
                 if (l.note != null && l.note!.isNotEmpty)
-                  Text(
-                    l.note!,
-                    style: const TextStyle(fontSize: 10, color: AppColors.t2),
-                  ),
+                  Text(l.note!, style: const TextStyle(fontSize: 10, color: AppColors.t2)),
               ],
             ),
           ),
@@ -756,7 +781,25 @@ class _StockCardState extends State<StockCard> {
               ),
             ],
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 6),
+          IconButton(
+            icon: const Icon(LucideIcons.pencil, size: 13, color: AppColors.t3),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => AddTransactionSheet(
+                  code: s.code,
+                  type: t.type,
+                  editTransaction: t,
+                ),
+              );
+            },
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(LucideIcons.x, size: 14, color: AppColors.t3),
             onPressed: () => context

@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../providers/portfolio_provider.dart';
+import '../models/models.dart';
 
 class AddTransactionSheet extends StatefulWidget {
   final String code;
   final String type;
-  const AddTransactionSheet({super.key, required this.code, required this.type});
+  /// If editing, pass the existing transaction
+  final Transaction? editTransaction;
+
+  const AddTransactionSheet({
+    super.key,
+    required this.code,
+    required this.type,
+    this.editTransaction,
+  });
 
   @override
   State<AddTransactionSheet> createState() => _AddTransactionSheetState();
@@ -18,10 +27,25 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   final _priceC = TextEditingController();
   final _commissionPercentC = TextEditingController(text: '1.12');
 
+  bool get _isEditing => widget.editTransaction != null;
+
   @override
   void initState() {
     super.initState();
     _type = widget.type;
+
+    // Pre-fill fields if editing
+    if (_isEditing) {
+      final t = widget.editTransaction!;
+      _type = t.type;
+      _qtyC.text = t.qty.toString();
+      _priceC.text = t.price.toString();
+      // Reverse-calculate commission percent from stored amount
+      final total = t.qty * t.price;
+      if (total > 0 && t.commission > 0) {
+        _commissionPercentC.text = ((t.commission / total) * 100).toStringAsFixed(2);
+      }
+    }
   }
 
   @override
@@ -39,7 +63,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(top: 14, bottom: 22), decoration: BoxDecoration(color: AppColors.s5, borderRadius: BorderRadius.circular(2)))),
-            const Text('Add Transaction', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+            Text(_isEditing ? 'Edit Transaction' : 'Add Transaction', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
             const SizedBox(height: 16),
             const Text('TRANSACTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.t2, letterSpacing: 1.0)),
             const SizedBox(height: 8),
@@ -72,7 +96,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
                 ),
-                child: const Text('Add Transaction', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.2)),
+                child: Text(_isEditing ? 'Save Changes' : 'Add Transaction', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.2)),
               ),
             ),
             const SizedBox(height: 10),
@@ -127,7 +151,7 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
         decoration: BoxDecoration(
           color: isSelected ? activeBg : Colors.transparent,
           borderRadius: BorderRadius.circular(11),
-          border: Border.all(color: isSelected ? activeColor.withOpacity(0.5) : Colors.transparent),
+          border: Border.all(color: isSelected ? activeColor.withValues(alpha: 0.5) : Colors.transparent),
         ),
         alignment: Alignment.center,
         child: Text(
@@ -150,8 +174,13 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     if (qty <= 0 || price <= 0) return;
 
     final commissionAmount = (qty * price) * (commissionPercent / 100);
+    final provider = context.read<PortfolioProvider>();
 
-    context.read<PortfolioProvider>().addTransaction(widget.code, _type, qty, price, DateTime.now(), commission: commissionAmount);
+    if (_isEditing) {
+      provider.updateTransaction(widget.code, widget.editTransaction!.id, _type, qty, price, commission: commissionAmount);
+    } else {
+      provider.addTransaction(widget.code, _type, qty, price, DateTime.now(), commission: commissionAmount);
+    }
     Navigator.pop(context);
   }
 }

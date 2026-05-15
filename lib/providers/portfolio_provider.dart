@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import '../models/models.dart';
 import '../services/cse_service.dart';
 
@@ -6,31 +7,13 @@ class PortfolioProvider extends ChangeNotifier {
   final _cseService = CseService();
   bool _isLoading = false;
   bool get isLoading => _isLoading;
-  final Map<String, Stock> _stocks = {
-    'AAIC.N0000': Stock(
-      code: 'AAIC.N0000',
-      name: 'Softlogic Life',
-      todayPrice: 93.80,
-      transactions: [
-        Transaction(
-          id: '1',
-          type: 'buy',
-          qty: 510,
-          price: 97.90,
-          dt: DateTime.parse('2026-05-06T09:30:00'),
-        ),
-      ],
-      priceLog: [
-        PriceLog(id: '101', price: 97.90, dt: DateTime.parse('2026-05-06T09:30:00'), note: 'Buy entry'),
-        PriceLog(id: '102', price: 96.50, dt: DateTime.parse('2026-05-07T09:15:00'), note: 'Morning'),
-        PriceLog(id: '103', price: 95.20, dt: DateTime.parse('2026-05-08T14:00:00'), note: 'Afternoon'),
-        PriceLog(id: '104', price: 94.10, dt: DateTime.parse('2026-05-09T09:00:00'), note: 'Opening'),
-        PriceLog(id: '105', price: 93.80, dt: DateTime.parse('2026-05-13T09:00:00'), note: 'Today open'),
-      ],
-    )
-  };
 
+  final Map<String, Stock> _stocks = {};
   Map<String, Stock> get stocks => _stocks;
+
+  Box<Stock> get _box => Hive.box<Stock>('stocks');
+
+  // ─── Computed portfolio totals ────────────────────────────────
 
   double get totalInvested => _stocks.values.fold(0, (sum, s) => sum + s.holdingsCost);
   double get totalValue => _stocks.values.fold(0, (sum, s) => sum + s.holdingsValue);
@@ -38,19 +21,43 @@ class PortfolioProvider extends ChangeNotifier {
   double get totalUnrealised => totalValue - totalInvested;
   double get totalPnlPercent => totalInvested > 0 ? (totalUnrealised / totalInvested) * 100 : 0;
 
+  // ─── Load from Hive on startup ────────────────────────────────
+
+  void loadFromHive() {
+    _stocks.clear();
+    for (final key in _box.keys) {
+      final stock = _box.get(key);
+      if (stock != null) {
+        _stocks[stock.code] = stock;
+      }
+    }
+
+    notifyListeners();
+  }
+
+  // ─── Hive persistence helpers ─────────────────────────────────
+
+  void _saveStock(Stock stock) {
+    _box.put(stock.code, stock);
+  }
+
+  void _deleteStockFromBox(String code) {
+    _box.delete(code);
+  }
+
+  // ─── CRUD Operations ─────────────────────────────────────────
+
   void addStock(String code, String name, String type, double qty, double price, DateTime dt, double today, {double commission = 0.0}) {
     if (!_stocks.containsKey(code)) {
       _stocks[code] = Stock(
         code: code,
         name: name,
         todayPrice: today > 0 ? today : price,
-        transactions: [],
-        priceLog: [],
       );
     }
     _stocks[code]!.name = name;
     if (today > 0) _stocks[code]!.todayPrice = today;
-    
+
     _stocks[code]!.transactions.insert(
       0,
       Transaction(
@@ -62,7 +69,7 @@ class PortfolioProvider extends ChangeNotifier {
         commission: commission,
       ),
     );
-    
+
     if (today > 0) {
       _stocks[code]!.priceLog.insert(
         0,
@@ -74,28 +81,8 @@ class PortfolioProvider extends ChangeNotifier {
         ),
       );
     }
+    _saveStock(_stocks[code]!);
     notifyListeners();
-  }
-
-  void logPrice(String code, double price, DateTime dt, String note) {
-    _stocks[code]?.priceLog.insert(
-      0,
-      PriceLog(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        price: price,
-        dt: dt,
-        note: note.isNotEmpty ? note : null,
-      ),
-    );
-    _stocks[code]?.todayPrice = price;
-    notifyListeners();
-  }
-
-  void updateTodayPrice(String code, double price) {
-    if (price > 0) {
-      _stocks[code]?.todayPrice = price;
-      notifyListeners();
-    }
   }
 
   void addTransaction(String code, String type, double qty, double price, DateTime dt, {double commission = 0.0}) {
@@ -110,18 +97,70 @@ class PortfolioProvider extends ChangeNotifier {
         commission: commission,
       ),
     );
+    if (_stocks[code] != null) _saveStock(_stocks[code]!);
     notifyListeners();
   }
 
   void deleteTransaction(String code, String id) {
     _stocks[code]?.transactions.removeWhere((t) => t.id == id);
+    if (_stocks[code] != null) _saveStock(_stocks[code]!);
+    notifyListeners();
+  }
+
+  void updateTransaction(String code, String id, String type, double qty, double price, {double commission = 0.0}) {
+    final stock = _stocks[code];
+    if (stock == null) return;
+    final idx = stock.transactions.indexWhere((t) => t.id == id);
+    if (idx == -1) return;
+    final old = stock.transactions[idx];
+    stock.transactions[idx] = Transaction(
+      id: id,
+      type: type,
+      qty: qty,
+      price: price,
+      dt: old.dt,
+      commission: commission,
+    );
+    _saveStock(stock);
+    notifyListeners();
+  }
+
+  void logPrice(String code, double price, DateTime dt, String note) {
+    _stocks[code]?.priceLog.insert(
+      0,
+      PriceLog(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        price: price,
+        dt: dt,
+        note: note.isNotEmpty ? note : null,
+      ),
+    );
+    _stocks[code]?.todayPrice = price;
+    if (_stocks[code] != null) _saveStock(_stocks[code]!);
     notifyListeners();
   }
 
   void deletePriceLog(String code, String id) {
     _stocks[code]?.priceLog.removeWhere((p) => p.id == id);
+    if (_stocks[code] != null) _saveStock(_stocks[code]!);
     notifyListeners();
   }
+
+  void updateTodayPrice(String code, double price) {
+    if (price > 0) {
+      _stocks[code]?.todayPrice = price;
+      if (_stocks[code] != null) _saveStock(_stocks[code]!);
+      notifyListeners();
+    }
+  }
+
+  void deleteStock(String code) {
+    _stocks.remove(code);
+    _deleteStockFromBox(code);
+    notifyListeners();
+  }
+
+  // ─── Live price refresh from CSE API ──────────────────────────
 
   Future<void> refreshPrices() async {
     if (_stocks.isEmpty) return;
@@ -133,9 +172,10 @@ class PortfolioProvider extends ChangeNotifier {
       for (var item in prices) {
         final symbol = item['symbol']?.toString();
         final lastPrice = double.tryParse(item['lastTradedPrice']?.toString() ?? '0');
-        
+
         if (symbol != null && lastPrice != null && _stocks.containsKey(symbol)) {
           _stocks[symbol]!.todayPrice = lastPrice;
+          _saveStock(_stocks[symbol]!);
         }
       }
     } catch (e) {
@@ -153,9 +193,10 @@ class PortfolioProvider extends ChangeNotifier {
       if (reqInfo != null && _stocks.containsKey(symbol)) {
         final name = reqInfo['name']?.toString();
         final lastPrice = double.tryParse(reqInfo['lastTradedPrice']?.toString() ?? '0');
-        
+
         if (name != null) _stocks[symbol]!.name = name;
         if (lastPrice != null && lastPrice > 0) _stocks[symbol]!.todayPrice = lastPrice;
+        _saveStock(_stocks[symbol]!);
         notifyListeners();
       }
     } catch (e) {

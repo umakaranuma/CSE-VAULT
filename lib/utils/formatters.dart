@@ -26,4 +26,20 @@ class Formatters {
   static String formatDateLong(DateTime dt) {
     return DateFormat('dd MMM yyyy HH:mm').format(dt);
   }
+
+  static String formatTime(DateTime dt) {
+    return DateFormat('hh:mm a').format(dt);
+  }
+
+  static String formatDateWithDay(DateTime dt) {
+    return DateFormat('EEE, dd MMM').format(dt);
+  }
+
+  static String formatDateOnly(DateTime dt) {
+    return DateFormat('dd MMM yyyy').format(dt);
+  }
+
+  static bool isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
 }
