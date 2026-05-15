@@ -93,7 +93,7 @@ class _MainScreenState extends State<MainScreen> {
           SafeArea(
             bottom: false,
             child: IndexedStack(
-              index: _currentIndex > 1 ? _currentIndex - 1 : _currentIndex,
+              index: _currentIndex,
               children: _screens,
             ),
           ),
