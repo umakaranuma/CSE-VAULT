@@ -6,6 +6,9 @@ import 'stocks/stocks_screen.dart';
 import 'history/history_screen.dart';
 import '../sheets/add_stock_sheet.dart';
 
+import '../providers/portfolio_provider.dart';
+import 'package:provider/provider.dart';
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -15,6 +18,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PortfolioProvider>().refreshPrices();
+    });
+  }
   
   final List<Widget> _screens = [
     const HomeScreen(),

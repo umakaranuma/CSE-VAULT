@@ -48,25 +48,58 @@ class StocksScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) => const AddStockSheet(),
-                    );
-                  },
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.glass2,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border2),
+                Row(
+                  children: [
+                    Consumer<PortfolioProvider>(
+                      builder: (context, provider, _) {
+                        return GestureDetector(
+                          onTap: provider.isLoading ? null : () => provider.refreshPrices(),
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: AppColors.glass2,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.border2),
+                            ),
+                            child: provider.isLoading
+                                ? const Center(
+                                    child: SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.em),
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(LucideIcons.refreshCw, color: AppColors.t2, size: 18),
+                          ),
+                        );
+                      },
                     ),
-                    child: const Icon(LucideIcons.plus, color: AppColors.t2, size: 18),
-                  ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const AddStockSheet(),
+                        );
+                      },
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.glass2,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.border2),
+                        ),
+                        child: const Icon(LucideIcons.plus, color: AppColors.t2, size: 18),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

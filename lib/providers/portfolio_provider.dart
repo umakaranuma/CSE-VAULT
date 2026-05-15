@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
+import '../services/cse_service.dart';
 
 class PortfolioProvider extends ChangeNotifier {
+  final _cseService = CseService();
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
   final Map<String, Stock> _stocks = {
     'AAIC.N0000': Stock(
       code: 'AAIC.N0000',
@@ -117,5 +121,45 @@ class PortfolioProvider extends ChangeNotifier {
   void deletePriceLog(String code, String id) {
     _stocks[code]?.priceLog.removeWhere((p) => p.id == id);
     notifyListeners();
+  }
+
+  Future<void> refreshPrices() async {
+    if (_stocks.isEmpty) return;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final prices = await _cseService.getTodaySharePrices();
+      for (var item in prices) {
+        final symbol = item['symbol']?.toString();
+        final lastPrice = double.tryParse(item['lastTradedPrice']?.toString() ?? '0');
+        
+        if (symbol != null && lastPrice != null && _stocks.containsKey(symbol)) {
+          _stocks[symbol]!.todayPrice = lastPrice;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error refreshing prices: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateStockFromLive(String symbol) async {
+    try {
+      final info = await _cseService.getCompanyInfo(symbol);
+      final reqInfo = info['reqSymbolInfo'];
+      if (reqInfo != null && _stocks.containsKey(symbol)) {
+        final name = reqInfo['name']?.toString();
+        final lastPrice = double.tryParse(reqInfo['lastTradedPrice']?.toString() ?? '0');
+        
+        if (name != null) _stocks[symbol]!.name = name;
+        if (lastPrice != null && lastPrice > 0) _stocks[symbol]!.todayPrice = lastPrice;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating stock $symbol: $e');
+    }
   }
 }
