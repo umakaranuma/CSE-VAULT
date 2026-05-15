@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import 'home/home_screen.dart';
 import 'stocks/stocks_screen.dart';
 import 'history/history_screen.dart';
+import 'more/more_screen.dart';
 import '../sheets/add_stock_sheet.dart';
 
 import '../providers/portfolio_provider.dart';
@@ -31,17 +32,10 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const StocksScreen(),
     const HistoryScreen(),
-    const Center(child: Text('More', style: TextStyle(color: AppColors.t2))),
+    const MoreScreen(),
   ];
 
-  void _onTabTapped(int index) {
-    if (index == 2) { // The FAB is actually index 2 visually, but handled separately.
-      return;
-    }
-    setState(() {
-      _currentIndex = index;
-    });
-  }
+
 
   void _showAddStockSheet() {
     showModalBottomSheet(
@@ -54,41 +48,45 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = colors(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: c.bg,
       body: Stack(
         children: [
-          // Background Noise Texture / ambient orbs (Simplified as gradients)
-          Positioned(
-            top: -100,
-            right: -80,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0x1400FFA3), Colors.transparent], // 0.08 alpha
-                  stops: [0.0, 0.7],
+          if (isDark)
+            Positioned(
+              top: -100,
+              right: -80,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0x1400FFA3), Colors.transparent],
+                    stops: [0.0, 0.7],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            bottom: 100,
-            left: -80,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0x124D8FFF), Colors.transparent], // 0.07 alpha
-                  stops: [0.0, 0.7],
+          if (isDark)
+            Positioned(
+              bottom: 100,
+              left: -80,
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [Color(0x124D8FFF), Colors.transparent],
+                    stops: [0.0, 0.7],
+                  ),
                 ),
               ),
             ),
-          ),
           
           SafeArea(
             bottom: false,
@@ -102,9 +100,9 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: Container(
         height: 76 + MediaQuery.of(context).padding.bottom,
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
-        decoration: const BoxDecoration(
-          color: Color(0xD9060810), // 0.85 opacity
-          border: Border(top: BorderSide(color: AppColors.border2, width: 1)),
+        decoration: BoxDecoration(
+          color: c.navBar,
+          border: Border(top: BorderSide(color: c.border, width: 1)),
         ),
         child: Stack(
           alignment: Alignment.center,
@@ -164,8 +162,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildTabItem(int index, String label, IconData icon) {
-    // We adjust the selected index check because of the FAB gap
-    int actualIndex = index > 1 ? index - 1 : index;
     bool isActive = _currentIndex == index;
 
     return Expanded(

@@ -20,17 +20,18 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = colors(context);
     final s = widget.stock;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-            colors: [AppColors.s2, AppColors.s1],
+            colors: [c.sheetTop, c.sheetBottom],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(top: BorderSide(color: AppColors.border3)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: c.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +41,7 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
                   width: 40,
                   height: 4,
                   margin: const EdgeInsets.only(top: 14, bottom: 22),
-                  decoration: BoxDecoration(color: AppColors.s5, borderRadius: BorderRadius.circular(2)))),
+                  decoration: BoxDecoration(color: c.borderLight, borderRadius: BorderRadius.circular(2)))),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -49,28 +50,28 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+                    Text(s.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4, color: c.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('${s.code} • LKR ${s.todayPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 13, color: AppColors.t2, fontWeight: FontWeight.w600)),
+                    Text('${s.code} • LKR ${s.todayPrice.toStringAsFixed(2)}', style: TextStyle(fontSize: 13, color: c.textSecondary, fontWeight: FontWeight.w600)),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.x, color: AppColors.t2),
+                  icon: Icon(LucideIcons.x, color: c.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 )
               ],
             ),
           ),
           const SizedBox(height: 20),
-          _buildFilters(),
+          _buildFilters(c),
           const SizedBox(height: 20),
-          Expanded(child: Padding(padding: const EdgeInsets.fromLTRB(16, 0, 24, 40), child: _buildChart(s))),
+          Expanded(child: Padding(padding: const EdgeInsets.fromLTRB(16, 0, 24, 40), child: _buildChart(s, c))),
         ],
       ),
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(AC c) {
     return SizedBox(
       height: 34,
       child: ListView.separated(
@@ -86,8 +87,8 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: isOn ? const Color(0x1A4D8FFF) : AppColors.glass,
-                border: Border.all(color: isOn ? const Color(0x404D8FFF) : AppColors.border2),
+                color: isOn ? const Color(0x1A4D8FFF) : c.chipBg,
+                border: Border.all(color: isOn ? const Color(0x404D8FFF) : c.border),
                 borderRadius: BorderRadius.circular(20),
               ),
               alignment: Alignment.center,
@@ -96,7 +97,7 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: isOn ? AppColors.em : AppColors.t2,
+                  color: isOn ? AppColors.em : c.textSecondary,
                 ),
               ),
             ),
@@ -106,7 +107,7 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
     );
   }
 
-  Widget _buildChart(Stock s) {
+  Widget _buildChart(Stock s, AC c) {
     final now = DateTime.now();
     DateTime? cutoff;
     switch (_selectedFilter) {
@@ -258,7 +259,7 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
 
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(text, style: GoogleFonts.jetBrainsMono(fontSize: 9, color: AppColors.t4)),
+                  child: Text(text, style: GoogleFonts.jetBrainsMono(fontSize: 9, color: c.textFaint)),
                 );
               },
             ),
@@ -268,14 +269,14 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: gridInterval,
-          getDrawingHorizontalLine: (value) => const FlLine(color: Color(0x0AFFFFFF), strokeWidth: 1),
+          getDrawingHorizontalLine: (value) => FlLine(color: c.borderLight, strokeWidth: 1),
         ),
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
             fitInsideHorizontally: true,
             fitInsideVertically: true,
-            getTooltipColor: (touchedSpot) => const Color(0xEB0F1428),
+            getTooltipColor: (touchedSpot) => c.cardElevated,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 if (spot.barIndex > 0) return null;
@@ -286,7 +287,7 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
                 final noteStr = entry?.note ?? '';
                 return LineTooltipItem(
                   '$timeStr  $dateStr\n',
-                  const TextStyle(fontSize: 10, color: AppColors.t2, height: 1.5),
+                  TextStyle(fontSize: 10, color: c.textSecondary, height: 1.5),
                   children: [
                     TextSpan(
                       text: 'LKR ${spot.y.toStringAsFixed(2)}',
@@ -295,7 +296,7 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
                     if (noteStr.isNotEmpty)
                       TextSpan(
                         text: '\n$noteStr',
-                        style: const TextStyle(fontSize: 9, color: AppColors.t3, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 9, color: c.textTertiary, fontWeight: FontWeight.w500),
                       ),
                   ],
                 );
