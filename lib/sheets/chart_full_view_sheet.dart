@@ -138,34 +138,73 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
       );
     }
 
+    // Time-based X values (minutes from first entry)
+    final baseTime = log.first.dt.millisecondsSinceEpoch.toDouble();
+    final spots = log
+        .map((l) => FlSpot(
+              (l.dt.millisecondsSinceEpoch.toDouble() - baseTime) / 60000,
+              l.price,
+            ))
+        .toList();
+
+    // Tight Y bounds
+    final prices = log.map((l) => l.price).toList();
+    final minPrice = prices.reduce((a, b) => a < b ? a : b);
+    final maxPrice = prices.reduce((a, b) => a > b ? a : b);
+    final priceRange = maxPrice - minPrice;
+    final yPadding = priceRange > 0 ? priceRange * 0.12 : maxPrice * 0.02;
+    final yMin = minPrice - yPadding;
+    final yMax = maxPrice + yPadding;
+
     final lastPrice = log.last.price;
     final isUp = lastPrice >= s.avgBuyPrice;
     final cMain = isUp ? AppColors.em : AppColors.red;
 
+    final showAvgLine = s.avgBuyPrice >= yMin && s.avgBuyPrice <= yMax && s.avgBuyPrice > 0;
+
+    final gridInterval = priceRange > 0
+        ? (priceRange / 4).ceilToDouble().clamp(0.1, 1000.0)
+        : 1.0;
+
     return LineChart(
       LineChartData(
+        minY: yMin,
+        maxY: yMax,
         lineBarsData: [
           LineChartBarData(
-            spots: log.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.price)).toList(),
+            spots: spots,
             isCurved: true,
+            curveSmoothness: 0.25,
             color: cMain,
             barWidth: 3,
             isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, bar, index) =>
+                  FlDotCirclePainter(
+                radius: 3.5,
+                color: cMain,
+                strokeWidth: 2,
+                strokeColor: AppColors.bg,
+              ),
+            ),
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
-                colors: [cMain.withOpacity(0.2), Colors.transparent],
+                colors: [cMain.withValues(alpha: 0.2), Colors.transparent],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
           ),
-          if (s.avgBuyPrice > 0)
+          if (showAvgLine)
             LineChartBarData(
-              spots: log.asMap().entries.map((e) => FlSpot(e.key.toDouble(), s.avgBuyPrice)).toList(),
+              spots: [
+                FlSpot(spots.first.x, s.avgBuyPrice),
+                FlSpot(spots.last.x, s.avgBuyPrice),
+              ],
               isCurved: false,
-              color: AppColors.blue.withOpacity(0.5),
+              color: AppColors.blue.withValues(alpha: 0.5),
               barWidth: 1.5,
               dashArray: [4, 4],
               dotData: const FlDotData(show: false),
@@ -173,33 +212,44 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
         ],
         titlesData: FlTitlesData(
           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 44,
+              reservedSize: 50,
               getTitlesWidget: (val, meta) {
+                if (val == meta.min || val == meta.max) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(right: 8.0),
-                  child: Text(Formatters.compactCurrency(val), style: GoogleFonts.jetBrainsMono(fontSize: 10, color: AppColors.t3)),
+                  child: Text(val.toStringAsFixed(1), style: GoogleFonts.jetBrainsMono(fontSize: 10, color: AppColors.t3)),
                 );
               },
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 22,
+              reservedSize: 28,
               getTitlesWidget: (val, meta) {
-                final idx = val.toInt();
-                if (idx < 0 || idx >= log.length) return const SizedBox.shrink();
-                // Show fewer dates so they don't overlap
-                if (idx % (log.length / 4).ceil() != 0 && idx != log.length - 1) return const SizedBox.shrink();
-                
-                final dt = log[idx].dt;
+                // Find closest log entry to this X value
+                int closestIdx = 0;
+                double closestDist = double.infinity;
+                for (int i = 0; i < spots.length; i++) {
+                  final dist = (spots[i].x - val).abs();
+                  if (dist < closestDist) {
+                    closestDist = dist;
+                    closestIdx = i;
+                  }
+                }
+                // Only show labels at spaced intervals
+                if (closestDist > 1) return const SizedBox.shrink();
+                final step = (log.length / 5).ceil().clamp(1, log.length);
+                if (closestIdx % step != 0 && closestIdx != log.length - 1) return const SizedBox.shrink();
+
+                final dt = log[closestIdx].dt;
                 String text;
                 if (['1H', '1D'].contains(_selectedFilter)) {
-                  text = '${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
+                  text = Formatters.formatTime(dt);
                 } else if (['1Y', 'ALL'].contains(_selectedFilter)) {
                   text = '${dt.month}/${dt.year.toString().substring(2)}';
                 } else {
@@ -217,26 +267,36 @@ class _ChartFullViewSheetState extends State<ChartFullViewSheet> {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: null,
+          horizontalInterval: gridInterval,
           getDrawingHorizontalLine: (value) => const FlLine(color: Color(0x0AFFFFFF), strokeWidth: 1),
         ),
         borderData: FlBorderData(show: false),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
             getTooltipColor: (touchedSpot) => const Color(0xEB0F1428),
             getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((LineBarSpot touchedSpot) {
-                if (touchedSpot.barIndex == 1) return null; // Avg buy line
-                final price = touchedSpot.y;
-                final dt = log[touchedSpot.x.toInt()].dt;
+              return touchedSpots.map((spot) {
+                if (spot.barIndex > 0) return null;
+                final idx = spot.spotIndex;
+                final entry = idx < log.length ? log[idx] : null;
+                final timeStr = entry != null ? Formatters.formatTime(entry.dt) : '';
+                final dateStr = entry != null ? Formatters.formatDateWithDay(entry.dt) : '';
+                final noteStr = entry?.note ?? '';
                 return LineTooltipItem(
-                  'LKR ${price.toStringAsFixed(2)}\n',
-                  GoogleFonts.jetBrainsMono(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  '$timeStr  $dateStr\n',
+                  const TextStyle(fontSize: 10, color: AppColors.t2, height: 1.5),
                   children: [
                     TextSpan(
-                      text: Formatters.formatDate(dt),
-                      style: GoogleFonts.jetBrainsMono(color: AppColors.t2, fontSize: 10, fontWeight: FontWeight.normal),
+                      text: 'LKR ${spot.y.toStringAsFixed(2)}',
+                      style: GoogleFonts.jetBrainsMono(fontSize: 14, fontWeight: FontWeight.w800, color: cMain),
                     ),
+                    if (noteStr.isNotEmpty)
+                      TextSpan(
+                        text: '\n$noteStr',
+                        style: const TextStyle(fontSize: 9, color: AppColors.t3, fontWeight: FontWeight.w500),
+                      ),
                   ],
                 );
               }).toList();

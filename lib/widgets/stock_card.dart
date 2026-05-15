@@ -474,15 +474,34 @@ class _StockCardState extends State<StockCard> {
               ],
               lineTouchData: LineTouchData(
                 touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (spots) => spots.map((s) {
-                    if (s.barIndex > 0) return null; // skip avg line
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+                    if (spot.barIndex > 0) return null; // skip avg line
+                    // Look up the original log entry by index
+                    final idx = spot.spotIndex;
+                    final entry = idx < log.length ? log[idx] : null;
+                    final timeStr = entry != null ? Formatters.formatTime(entry.dt) : '';
+                    final dateStr = entry != null ? Formatters.formatDateWithDay(entry.dt) : '';
+                    final noteStr = entry?.note ?? '';
                     return LineTooltipItem(
-                      'LKR ${s.y.toStringAsFixed(2)}',
-                      GoogleFonts.jetBrainsMono(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: cMain,
-                      ),
+                      '$timeStr  $dateStr\n',
+                      const TextStyle(fontSize: 10, color: AppColors.t2, height: 1.4),
+                      children: [
+                        TextSpan(
+                          text: 'LKR ${spot.y.toStringAsFixed(2)}',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: cMain,
+                          ),
+                        ),
+                        if (noteStr.isNotEmpty)
+                          TextSpan(
+                            text: '\n$noteStr',
+                            style: const TextStyle(fontSize: 9, color: AppColors.t3, fontWeight: FontWeight.w500),
+                          ),
+                      ],
                     );
                   }).toList(),
                 ),
